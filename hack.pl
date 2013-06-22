@@ -16,7 +16,7 @@ my @x_axis = ();
 my @y_axis = ();
 
 while ( my $line = <$tables> ) {
-    if ( $line =~ /\\hline\s(\d+\.\d+)\s\&\s(\d+\.\d+)/ ) {
+    if ( $line =~ /\\hline\s(-?\d+\.-?\d+)\s\&\s(-?\d+\.-?\d+)/ ) {
         push @x_axis, $1;
         push @y_axis, $2;
     }
