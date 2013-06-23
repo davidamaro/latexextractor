@@ -12,11 +12,14 @@ my $octave_file = 'oct.m';
 open my $octave, '>>', $octave_file
     or die "Cannot open '$octave_file' for writing: $!";
 
+#Este código se elimina ya que no es general
 my @x_axis = ();
 my @y_axis = ();
 my @z_axis = ();
-my $linea;
 
+#Código para obtener la primer linea
+#Error, por que elimina la primer linea
+my $linea;
 while ( $linea = <$tables> ) {
     if ( $linea =~ /(\\hline.*)/ ) {
         $linea = $1;
@@ -24,15 +27,12 @@ while ( $linea = <$tables> ) {
     }
 }
 
-print "$linea\n";
-
+# Se utiliza para conocer el número de columnas
 my $contador = 0;
-$contador++ while $linea =~ /[[:digit:].]+/g;
+$contador++ while $linea =~ /[[:digit:].-]+/g;
 
-print "Contador: '$contador'\n";
-
+#Generar la regex
 my $reg_exp = "\\\\hline\\s";
-
 for ( 1 .. $contador ) {
     $reg_exp .= "([[:digit:].-]+)";
     if ( $_ == $contador ) {
@@ -40,8 +40,8 @@ for ( 1 .. $contador ) {
     }
     $reg_exp .= "\\s\\&\\s";
 }
-print "$reg_exp\n";
 
+#Código temporal para asignar a un array
 while ( my $line = <$tables> ) {
     if ( $line =~ /$reg_exp/ ) {
         push @x_axis, $1;
