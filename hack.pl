@@ -1,6 +1,10 @@
 use strict;
 use warnings;
 use diagnostics;
+use Data::Dumper;
+
+#Names
+my @names = qw(array_a array_b array_c array_d);
 
 #Open file with LaTeX data
 my $filename = 'tab.tex';
@@ -13,9 +17,13 @@ open my $octave, '>>', $octave_file
     or die "Cannot open '$octave_file' for writing: $!";
 
 #Este código se elimina ya que no es general
-my @x_axis = ();
-my @y_axis = ();
-my @z_axis = ();
+
+my $data = [
+    my $data_a = [],
+    my $data_b = [],
+    my $data_c = [],
+    my $data_d = [],
+];
 
 #Código para obtener la primer linea
 #Error, por que elimina la primer linea
@@ -31,35 +39,37 @@ while ( $linea = <$tables> ) {
 my $contador = 0;
 $contador++ while $linea =~ /[[:digit:].-]+/g;
 
-#Generar la regex
-my $reg_exp = "\\\\hline\\s";
-for ( 1 .. $contador ) {
-    $reg_exp .= "([[:digit:].-]+)";
-    if ( $_ == $contador ) {
+while ( my $line = <$tables> ) {
+    my @m = ( $line =~ /([[:digit:].-]+)/g);
+    if (!@m) {
         last;
     }
-    $reg_exp .= "\\s\\&\\s";
-}
-
-#Código temporal para asignar a un array
-while ( my $line = <$tables> ) {
-    if ( $line =~ /$reg_exp/ ) {
-        push @x_axis, $1;
-        push @y_axis, $2;
-        push @z_axis, $3;
+    for my $i ( 0 .. ($contador - 1) ) {
+        push $data->[$i], $m[$i];
     }
 }
+
+#print Dumper($data);
+
+for my $i ( 0 .. $#$data ) {
+    print $octave "$names[$i] = [";
+    for my $j ( 0 .. $#$data_a ) {
+        print $octave " $data->[$i][$j] ";
+    }
+    print $octave "]\n";
+}
+
 #Write the useful information for Octave
-print $octave "x = [@x_axis];\n";
-print $octave "y = [@y_axis];\n";
-print $octave "z = [@z_axis];\n";
+#print $octave "x = [];\n";
+#print $octave "y = [];\n";
+#print $octave "z = [];\n";
 #print $octave "plot(x,y,'.','markersize',15)\n;";
 #print $octave "grid on\n;";
 #print $octave "xlabel('t(s)')\n";
 #print $octave "ylabel('y\(m\)')\n";
 
 #Run Octave's script
-system ("octave", "--silent", "--persist", "$octave_file");
+#system ("octave", "--silent", "--persist", "$octave_file");
 
 close $octave or die "Could not close '$octave_file': $!";
 close $tables or die "Could not close '$filename': $!";
