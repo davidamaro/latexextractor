@@ -49,8 +49,7 @@ while ( my $line = <$tables> ) {
     }
 }
 
-#print Dumper($data);
-
+#Write the useful information for Octave
 for my $i ( 0 .. $#$data ) {
     print $octave "$names[$i] = [";
     for my $j ( 0 .. $#$data_a ) {
@@ -59,17 +58,6 @@ for my $i ( 0 .. $#$data ) {
     print $octave "]\n";
 }
 
-#Write the useful information for Octave
-#print $octave "x = [];\n";
-#print $octave "y = [];\n";
-#print $octave "z = [];\n";
-#print $octave "plot(x,y,'.','markersize',15)\n;";
-#print $octave "grid on\n;";
-#print $octave "xlabel('t(s)')\n";
-#print $octave "ylabel('y\(m\)')\n";
-
-#Run Octave's script
-#system ("octave", "--silent", "--persist", "$octave_file");
 
 close $octave or die "Could not close '$octave_file': $!";
 close $tables or die "Could not close '$filename': $!";
