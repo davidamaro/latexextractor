@@ -1,23 +1,24 @@
+#!/usr/bin/perl 
+
 use strict;
 use warnings;
 use diagnostics;
-use Data::Dumper;
 
 #Names
 my @names = qw(array_a array_b array_c array_d);
 
 #Open file with LaTeX data
-my $filename = 'tab.tex';
-open my $tables, '<', $filename
-    or die "Cannot open '$filename' for writing: $!";
+my $latexfile = shift @ARGV
+    or die "No input file.\n";
+open my $tables, '<', $latexfile
+    or die "Cannot open '$latexfile' for writing: $!";
 
 #Open file that will use Octave
 my $octave_file = 'oct.m';
 open my $octave, '>>', $octave_file
     or die "Cannot open '$octave_file' for writing: $!";
 
-#Este código se elimina ya que no es general
-
+# Referencias usadas para almacenar la información
 my $data = [
     my $data_a = [],
     my $data_b = [],
@@ -25,19 +26,21 @@ my $data = [
     my $data_d = [],
 ];
 
-#Código para obtener la primer linea
-#Error, por que elimina la primer linea
+# Utiliza la declaración de la tabla
+# para conocer el número de columnas
 my $linea;
 while ( $linea = <$tables> ) {
-    if ( $linea =~ /(\\hline.*)/ ) {
+    if ( $linea =~ /(\\begin\{tabular\}.*)/ ) {
         $linea = $1;
         last;
     }
 }
 
+
 # Se utiliza para conocer el número de columnas
 my $contador = 0;
-$contador++ while $linea =~ /[[:digit:].-]+/g;
+$contador++ while $linea =~ /\|/g;
+$contador--;
 
 while ( my $line = <$tables> ) {
     my @m = ( $line =~ /([[:digit:].-]+)/g);
@@ -60,4 +63,4 @@ for my $i ( 0 .. $#$data ) {
 
 
 close $octave or die "Could not close '$octave_file': $!";
-close $tables or die "Could not close '$filename': $!";
+close $tables or die "Could not close '$latexfile': $!";
