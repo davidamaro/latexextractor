@@ -3,6 +3,10 @@
 use strict;
 use warnings;
 use diagnostics;
+use Data::Dumper;
+
+use constant LONGTABLE => 14;
+use constant TABLE => 12;
 
 #Names
 my @names = qw(array_a array_b array_c array_d);
@@ -29,26 +33,33 @@ my $data = [
 # Utiliza la declaración de la tabla
 # para conocer el número de columnas
 my $linea;
+my $contador = 0;
+
 while ( $linea = <$tables> ) {
     if ( $linea =~ /(\\begin\{tabular\}.*)/ ) {
         $linea = $1;
+        $contador++ while $linea =~ /[[:alpha:]]/g;
+        $contador -= TABLE;
+        last;
+    }
+    elsif ( $linea =~ /(\\begin\{longtable\}.*)/) {
+        $linea = $1;
+        $contador++ while $linea =~ /[[:alpha:]]/g;
+        $contador -= LONGTABLE;
         last;
     }
 }
 
-
-# Se utiliza para conocer el número de columnas
-my $contador = 0;
-$contador++ while $linea =~ /\|/g;
-$contador--;
-
+# Ignora las lineas que no tengan hline
+# y asigna asigna los valores a cada
+# referencia.
+# Bug: Se van algunos undef.
 while ( my $line = <$tables> ) {
-    my @m = ( $line =~ /([[:digit:].-]+)/g);
-    if (!@m) {
-        last;
-    }
-    for my $i ( 0 .. ($contador - 1) ) {
-        push $data->[$i], $m[$i];
+    if ( $line =~ /(?=hline)/ ) { 
+        my @m = ( $line =~ /([[:digit:].-]+)/g);
+        for my $i ( 0 .. ($contador - 1) ) {
+            push $data->[$i], $m[$i];
+        }
     }
 }
 
@@ -58,7 +69,7 @@ for my $i ( 0 .. $#$data ) {
     for my $j ( 0 .. $#$data_a ) {
         print $octave " $data->[$i][$j] ";
     }
-    print $octave "]\n";
+    print $octave "];\n";
 }
 
 
