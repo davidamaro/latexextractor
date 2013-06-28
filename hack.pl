@@ -3,62 +3,73 @@
 use strict;
 use warnings;
 use diagnostics;
-use Data::Dumper;
 use Regexp::Common;
+use Data::Dumper;
 
 # Tamaño de los carácteres de la
 # declaración en LaTeX de las tablas
 use constant LONGTABLE => 14;
 use constant TABLE => 12;
 
-#Names
-my
-@names
-=
-qw(array_a
-array_b
-array_c
-array_d
-array_e
-array_f
-array_g
-array_h
-array_i
-array_j
-array_k
-array_l
-array_m
-array_n
-array_o
-array_p
-array_q
-array_r
-array_s
+# Nombre de cada columna que devolvera el programa
+my @names = qw(array_a
+               array_b
+               array_c
+               array_d
+               array_e
+               array_f
+               array_g
+               array_h
+               array_i
+               array_j
+               array_k
+               array_l
+               array_m
+               array_n
+               array_o
+               array_p
+               array_q
+               array_r
+               array_s
 );
+
+# Variables que funcionan para conocer el valor de inicio
+# y final de la lista @lista
 my $inicio = 0;
 my $adicion = 0;
-my $asesino = 0;
-my @valores = ();
+my @lista = (
+);
+
+sub get_filenames {
+    my %arguments;
+    die "Número de parámetros inválido" if (@ARGV != 2);
+    for (@ARGV) {
+        my $adver = 0;
+        $adver++ if ( $_ =~ /\./g );
+        my $filename = $_;
+        die "Nombre de archivo inválido" if ( $adver > 1);
+        if ( $_ =~ /(?=\.m)/ ) {
+            $arguments{octavefn} = "$filename";
+        }
+        elsif ( $_ =~ /(?=\.tex)/ ) {
+            $arguments{latex} = "$filename";
+        }
+    }
+    return %arguments;
+}
 
 #Open file with LaTeX data
-my $latexfile = shift @ARGV
+my %arguments = get_filenames();
+
+my $latexfile = $arguments{latex}
     or die "No input file.\n";
 open my $tables, '<', $latexfile
     or die "Cannot open '$latexfile' for writing: $!";
 
 #Open file that will use Octave
-my $octave_file = 'oct.m';
+my $octave_file = $arguments{octavefn};
 open my $octave, '>>', $octave_file
     or die "Cannot open '$octave_file' for writing: $!";
-
-# Referencias usadas para almacenar la información
-my @lista = (
-);
-
-# Utiliza la declaración de la tabla
-# para conocer el número de columnas
-# y ver si se tiene que eliminar el primero 
-# y último para el longtable
 
 sub numero_columnas {
     my $linea = shift;
@@ -87,23 +98,12 @@ sub add_space {
 # y asigna asigna los valores a cada
 # referencia.
 
-sub alfa_omega {
-    my @array = @lista;
-    my $contador = 0;
-    $contador++ while ( exists $lista[$contador]->[0] );
-    return $contador;
-}
-
 sub get_type {
     my $linea = shift;
     my $columnas = numero_columnas($linea);
-    #print "Adición: $adicion\n";
     chomp $linea;
     if ( $linea =~ /end(\{tabular\}|\{longtable\})/ ) {
-        #print "Salí\n";
         $inicio += $adicion;
-        push @valores, $adicion;
-        $asesino++;
         return;
     }
     elsif ( $linea =~ /(?=tabular|longtable)/ ) {
@@ -112,6 +112,9 @@ sub get_type {
         return;
     }
     elsif ( $linea =~ /\\hline.+?\z/ ) {
+        return $linea;
+    }
+    elsif ( $linea =~ /$RE{num}{real}/ ) {
         return $linea;
     }
     else {
@@ -124,39 +127,28 @@ while ( my $line = <$tables> ) {
     next if !$valor;
     my @datos = ( $line =~ /$RE{num}{real}/g);
     my $final = $inicio + $adicion - 1;
-    #print "$inicio - $adicion - $final\n";
     foreach my $index ( $inicio .. $final ) {
         push $lista[$index], $datos[$index - $inicio];
     }
 }
 
-#print $asesino;
-#print "@valores\n";
-#print Dumper(@lista);
+print Dumper(@lista);
 
-#Write the useful information for Octave
-#my $conter = $lista[0];
-# Número de columnas
-#foreach my $i ( 0 .. ($contador - 1) ) {
-#    print $octave "$names[$i] = [";
-#    # Número de elementos
-#    foreach my $j ( 0 .. ( $#$conter ) ) {
-#        print $octave " $lista[$i][$j] ";
-#    }
-#    print $octave "];\n";
-#}
 my $tamano = 0;
-$tamano++ while ( exists $lista[$tamano]->[0] );
-$tamano--;
-
-for my $i ( 0 .. $tamano ) {
-    my $j = 0;
-    print $octave "$names[$i] = [";
-    while ( exists $lista[$i]->[$j] ) {
-        print $octave " $lista[$i]->[$j] ";
-        $j++;
+while ( exists $lista[$tamano]->[0] ) {
+    my $parcial = 0;
+    print $octave "$names[$tamano] = [";
+    if ( ! defined $lista[$tamano]->[$parcial] ) {
+        warn "Posible tabla mal formada o espacio en blanco!";
+        $lista[$tamano]->[$parcial] = "NaN";
+    }
+    while ( exists $lista[$tamano]->[$parcial] ) {
+        print $octave " $lista[$tamano]->[$parcial] ";
+        $parcial++;
     }
     print $octave "];\n";
+    $tamano++;
 }
+
 close $octave or die "Could not close '$octave_file': $!";
 close $tables or die "Could not close '$latexfile': $!";
