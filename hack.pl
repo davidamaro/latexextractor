@@ -111,9 +111,9 @@ sub get_type {
         $adicion = $columnas;
         return;
     }
-    elsif ( $linea =~ /\\hline.+?\z/ ) {
-        return $linea;
-    }
+#    elsif ( $linea =~ /\\hline.+?\z/ ) {
+#        return $linea;
+#    }
     elsif ( $linea =~ /$RE{num}{real}/ ) {
         return $linea;
     }
@@ -132,8 +132,6 @@ while ( my $line = <$tables> ) {
     }
 }
 
-print Dumper(@lista);
-
 my $tamano = 0;
 while ( exists $lista[$tamano]->[0] ) {
     my $parcial = 0;
@@ -142,7 +140,7 @@ while ( exists $lista[$tamano]->[0] ) {
         warn "Posible tabla mal formada o espacio en blanco!";
         $lista[$tamano]->[$parcial] = "NaN";
     }
-    while ( exists $lista[$tamano]->[$parcial] ) {
+    while ( exists $lista[$tamano]->[$parcial] and defined $lista[$tamano]->[$parcial] ) {
         print $octave " $lista[$tamano]->[$parcial] ";
         $parcial++;
     }
