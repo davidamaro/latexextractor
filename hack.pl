@@ -101,6 +101,7 @@ sub add_space {
 sub get_type {
     my $linea = shift;
     my $columnas = numero_columnas($linea);
+    $linea = subs_error($linea);
     chomp $linea;
     if ( $linea =~ /end(\{tabular\}|\{longtable\})/ ) {
         $inicio += $adicion;
@@ -111,10 +112,7 @@ sub get_type {
         $adicion = $columnas;
         return;
     }
-#    elsif ( $linea =~ /\\hline.+?\z/ ) {
-#        return $linea;
-#    }
-    elsif ( $linea =~ /$RE{num}{real}/ ) {
+    elsif ( $linea =~ /$RE{num}{real}{-expon=>'[eE]?'}/ ) {
         return $linea;
     }
     else {
@@ -122,15 +120,24 @@ sub get_type {
     }
 }
 
+sub subs_error {
+    my $line = shift;
+    if ($line) {
+        $line =~ s/\\times10\^\{($RE{num}{int})\}/E$1/g;
+    }
+    return $line;
+}
+
 while ( my $line = <$tables> ) {
     my $valor = get_type($line);
     next if !$valor;
-    my @datos = ( $line =~ /$RE{num}{real}/g);
+    my @datos = ( $valor =~ /($RE{num}{real}{-expon=>'[eE]?'})/g);
     my $final = $inicio + $adicion - 1;
     foreach my $index ( $inicio .. $final ) {
         push $lista[$index], $datos[$index - $inicio];
     }
 }
+
 
 my $tamano = 0;
 while ( exists $lista[$tamano]->[0] ) {
