@@ -1,7 +1,7 @@
 README
 ======
 
-A very simply latex data extractor (only from tables).
+A very simple latex data extractor (only from tables).
 
 Usage
 -----
